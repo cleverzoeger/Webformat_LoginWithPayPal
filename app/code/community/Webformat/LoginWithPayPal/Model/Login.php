@@ -60,11 +60,12 @@ class Webformat_LoginWithPayPal_Model_Login extends Mage_Core_Model_Abstract {
         if (!$this->getUserInfo()->hasEmail()) {
             throw new Zend_Exception("Can't retrieve user's email!");
         }
-        if (!$this->getUserInfo()->hasGivenName()) {
-            throw new Zend_Exception("Can't retrieve user's given name!");
-        }
-        if (!$this->getUserInfo()->hasFamilyName()) {
-            throw new Zend_Exception("Can't retrieve user's family name!");
+        if (!$this->getUserInfo()->hasName()) {
+            if (!$this->getUserInfo()->hasGivenName()) {
+                throw new Zend_Exception("Can't retrieve user's given name!");
+            } elseif (!$this->getUserInfo()->hasFamilyName()) {
+                throw new Zend_Exception("Can't retrieve user's family name!");
+            }
         }
     }
 
@@ -102,9 +103,18 @@ class Webformat_LoginWithPayPal_Model_Login extends Mage_Core_Model_Abstract {
         $password = $customer->generatePassword();
 
         $userInfo = $this->getUserInfo();
-
-        $customer->setFirstname($userInfo->getGivenName());
-        $customer->setLastname($userInfo->getFamilyName());
+        if ($this->getUserInfo()->hasName()) {
+            if (strpos($userInfo->getName(), '+') !== false) {
+                $name = explode('+', $userInfo->getName());
+            } else {
+                $name = explode(' ', $userInfo->getName());
+            }
+        } else {
+            $name[] = $userInfo->getGivenName();
+            $name[] = $userInfo->getFamilyName();
+        }
+        $customer->setFirstname($name[0]);
+        $customer->setLastname($name[1]);
         $customer->setEmail($userInfo->getEmail());
         $customer->setPassword($password);
 
